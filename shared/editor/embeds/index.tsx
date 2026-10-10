@@ -93,7 +93,7 @@ export class EmbedDescriptor {
   /** Whether this embed has been disabled by the team admin */
   disabled?: boolean;
 
-  constructor(options: Omit<EmbedDescriptor, "matcher">) {
+  constructor(options: Omit<EmbedDescriptor, "matcher" | "customUrl">) {
     this.id = options.id;
     this.icon = options.icon;
     this.name = options.name;
@@ -112,9 +112,18 @@ export class EmbedDescriptor {
     this.component = options.component;
   }
 
+  /**
+   * The custom installation URL configured for this embed, if any. Most
+   * integrations store it at `settings.url`, Diagrams.net nests it under
+   * `settings.diagrams.url`.
+   */
+  get customUrl(): string | undefined {
+    return this.settings?.url ?? this.settings?.diagrams?.url;
+  }
+
   matcher(url: string): false | RegExpMatchArray {
-    const settingsDomainRegex = this.settings?.url
-      ? urlRegex(this.settings?.url)
+    const settingsDomainRegex = this.customUrl
+      ? urlRegex(this.customUrl)
       : undefined;
 
     const regexes = settingsDomainRegex
