@@ -17,11 +17,16 @@ import FileExtension from "../components/FileExtension";
 import Widget from "../components/Widget";
 import type { MarkdownSerializerState } from "../lib/markdown/serializer";
 import { resolvePDFDimensions } from "../lib/pdf";
+import {
+  isCSVAttachment,
+  isPreviewableAttachment,
+} from "../queries/isCSVAttachment";
 import { isPDFAttachment } from "../queries/isPDFAttachment";
 import attachmentsRule from "../rules/links";
 import type { ComponentProps } from "../types";
 import Node from "./Node";
 import PdfViewer from "../components/PDF";
+import CsvViewer from "../components/CsvViewer";
 
 export default class Attachment extends Node {
   get name() {
@@ -112,7 +117,7 @@ export default class Attachment extends Node {
       getPos: () => number | undefined;
     }) =>
     ({ width }: { width: number; height?: number }) => {
-      if (!node.attrs.preview) {
+      if (!node.attrs.preview || !isPDFAttachment(node)) {
         return;
       }
 
@@ -142,15 +147,7 @@ export default class Attachment extends Node {
       </>
     );
 
-    return node.attrs.preview && !embedsDisabled && isPDFAttachment(node) ? (
-      <PdfViewer
-        icon={<FileExtension title={node.attrs.title} />}
-        title={node.attrs.title}
-        context={context}
-        onChangeSize={this.handleChangeSize(props)}
-        {...props}
-      />
-    ) : (
+    const widget = (
       <Widget
         icon={<FileExtension title={node.attrs.title} />}
         href={node.attrs.href}
@@ -171,6 +168,36 @@ export default class Attachment extends Node {
         {node.attrs.href && !isEditable && <DownloadIcon size={20} />}
       </Widget>
     );
+
+    if (!node.attrs.preview || embedsDisabled) {
+      return widget;
+    }
+
+    if (isPDFAttachment(node)) {
+      return (
+        <PdfViewer
+          icon={<FileExtension title={node.attrs.title} />}
+          title={node.attrs.title}
+          context={context}
+          onChangeSize={this.handleChangeSize(props)}
+          {...props}
+        />
+      );
+    }
+
+    if (isCSVAttachment(node) && node.attrs.href) {
+      return (
+        <CsvViewer
+          icon={<FileExtension title={node.attrs.title} />}
+          title={node.attrs.title}
+          context={context}
+          fallback={widget}
+          {...props}
+        />
+      );
+    }
+
+    return widget;
   };
 
   commands({ type }: { type: NodeType }) {
@@ -258,7 +285,7 @@ export default class Attachment extends Node {
         }
         const { node } = state.selection;
 
-        if (!isPDFAttachment(node)) {
+        if (!isPreviewableAttachment(node)) {
           return false;
         }
 

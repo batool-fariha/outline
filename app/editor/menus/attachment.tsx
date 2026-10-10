@@ -2,6 +2,7 @@ import { t } from "i18next";
 import { TrashIcon, DownloadIcon, ReplaceIcon, PDFIcon } from "outline-icons";
 import { isNodeActive } from "@shared/editor/queries/isNodeActive";
 import { isPDFAttachmentActive } from "@shared/editor/queries/isPDFAttachment";
+import { isPreviewableAttachmentActive } from "@shared/editor/queries/isCSVAttachment";
 import type { MenuItem, SelectionContext } from "@shared/editor/types";
 
 /**
@@ -36,7 +37,7 @@ export default function attachmentMenuItems(ctx: SelectionContext): MenuItem[] {
       tooltip: t("Show preview"),
       icon: <PDFIcon />,
       active: isAttachmentWithPreview,
-      visible: isPDFAttachmentActive(state),
+      visible: isPreviewableAttachmentActive(state),
     },
     {
       name: "separator",
@@ -44,7 +45,7 @@ export default function attachmentMenuItems(ctx: SelectionContext): MenuItem[] {
     {
       name: "dimensions",
       tooltip: `${t("Width")} × ${t("Height")}`,
-      visible: isAttachmentWithPreview(state),
+      visible: isAttachmentWithPreview(state) && isPDFAttachmentActive(state),
       skipIcon: true,
     },
     {
